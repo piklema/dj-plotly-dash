@@ -12,8 +12,8 @@ def read_req_file(req_type):
 
 
 general_requires = [
-    'Django>=2.0,<3.2',
-    'plotly>=4.14.1',
+    'Django>=2.0,<4',
+    'plotly>=4.14.1,<6',
     'future',
 ]
 
@@ -30,7 +30,7 @@ setup(
     long_description=io.open('README.md', encoding='utf-8').read(),
     long_description_content_type='text/markdown',
     install_requires=[],
-    python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*",
+    python_requires=">=3.8",
     extras_require={
         'all': general_requires + ['dash_renderer==1.8.3'],
         'no-dash-renderer': general_requires
@@ -52,6 +52,7 @@ setup(
         'Framework :: Django :: 2.1',
         'Framework :: Django :: 2.2',
         'Framework :: Django :: 3.1',
+        'Framework :: Django :: 3.2',
         'Intended Audience :: Developers',
         'Intended Audience :: Education',
         'Intended Audience :: Financial and Insurance Industry',
@@ -64,6 +65,7 @@ setup(
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
         'Topic :: Database :: Front-Ends',
         'Topic :: Office/Business :: Financial :: Spreadsheet',
         'Topic :: Scientific/Engineering :: Visualization',
