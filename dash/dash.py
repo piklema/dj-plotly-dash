@@ -16,12 +16,12 @@ from django.contrib.staticfiles.utils import get_files
 from django.contrib.staticfiles.storage import staticfiles_storage
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
+from django.templatetags.static import static
 from django.utils.safestring import mark_safe
 
 import plotly
 import dash_renderer
 
-from .fingerprint import build_fingerprint, check_fingerprint
 from .resources import Scripts, Css
 from .dependencies import handle_callback_args
 from .exceptions import PreventUpdate
@@ -495,7 +495,13 @@ class Dash(object):
         # template in the necessary component suite JS bundles
         # add the version number of the package as a query parameter
         # for cache busting
-        def _relative_url_path(path_prefix, relative_package_path="", namespace=""):
+
+        def _relative_url_path(
+                path_prefix,
+                relative_package_path="",
+                namespace="",
+                serve_from_static=False
+        ):
 
             module_path = os.path.join(
                 os.path.dirname(sys.modules[namespace].__file__),
@@ -504,22 +510,22 @@ class Dash(object):
 
             modified = int(os.stat(module_path).st_mtime)
 
-            return "{}_dash-component-suites/{}/{}".format(
+            url_path = '{}_dash-component-suites/{}/{}?v={}&m={}'.format(
                 path_prefix,
                 namespace,
-                build_fingerprint(
-                    relative_package_path,
-                    importlib.import_module(namespace).__version__,
-                    modified,
-                ),
+                relative_package_path,
+                importlib.import_module(namespace).__version__,
+                modified
             )
 
-        try:
-            DASH_COMPONENT_SUITES_URL = getattr(settings, 'DASH_COMPONENT_SUITES_URL', '')
-        except ImproperlyConfigured:
-            DASH_COMPONENT_SUITES_URL = ''
+            return static(url_path) if serve_from_static else url_path
 
-        path_prefix = DASH_COMPONENT_SUITES_URL or self.config['requests_pathname_prefix']
+        try:
+            is_debug_active =  getattr(settings, 'DEBUG', False)
+        except ImproperlyConfigured:
+            is_debug_active = False
+
+        path_prefix = self.config['requests_pathname_prefix'] if is_debug_active else ''
 
         srcs = []
         for resource in resources:
@@ -538,6 +544,7 @@ class Dash(object):
                                 path_prefix,
                                 relative_package_path=rel_path,
                                 namespace=resource["namespace"],
+                                serve_from_static=not is_debug_active,
                             )
                         )
             elif "external_url" in resource:
@@ -648,45 +655,13 @@ class Dash(object):
         return "\n      ".join(tags)
 
     # pylint: disable=unused-argument
-    def serve_component_suites(self, package_name, fingerprinted_path, *args, **kwargs):
+    def serve_component_suites(self, package_name, path_in_package_dist, *args, **kwargs):
         """ Serve the JS bundles for each package
         """
-        path_in_pkg, has_fingerprint = check_fingerprint(fingerprinted_path)
 
-        _validate.validate_js_path(self.registered_paths, package_name, path_in_pkg)
+        _validate.validate_js_path(self.registered_paths, package_name, path_in_package_dist)
 
-        # extension = "." + path_in_pkg.split(".")[-1]
-        # mimetype = mimetypes.types_map.get(extension, "application/octet-stream")
-        #
-        # package = sys.modules[package_name]
-        # self.logger.debug(
-        #     "serving -- package: %s[%s] resource: %s => location: %s",
-        #     package_name,
-        #     package.__version__,
-        #     path_in_pkg,
-        #     package.__path__,
-        # )
-        #
-        # response = flask.Response(
-        #     pkgutil.get_data(package_name, path_in_pkg), mimetype=mimetype
-        # )
-        #
-        # if has_fingerprint:
-        #     # Fingerprinted resources are good forever (1 year)
-        #     # No need for ETag as the fingerprint changes with each build
-        #     response.cache_control.max_age = 31536000  # 1 year
-        # else:
-        #     # Non-fingerprinted resources are given an ETag that
-        #     # will be used / check on future requests
-        #     response.add_etag()
-        #     tag = response.get_etag()[0]
-        #
-        #     request_etag = flask.request.headers.get("If-None-Match")
-        #
-        #     if '"{}"'.format(tag) == request_etag:
-        #         response = flask.Response(None, status=304)
-        #
-        return pkgutil.get_data(package_name, path_in_pkg)
+        return pkgutil.get_data(package_name, path_in_package_dist)
 
     def index(self, *args, **kwargs):  # pylint: disable=unused-argument
         if self.config.assets_folder:

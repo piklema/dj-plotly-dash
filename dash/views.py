@@ -215,15 +215,14 @@ class BaseDashView(TemplateView, metaclass=MetaDashView):
         self.dash._generate_scripts_html()
         self.dash._generate_css_dist_html()
 
-        ext = kwargs.get('fingerprinted_path', '').split('.')[-1]
+        ext = kwargs.get('path_in_package_dist', '').split('.')[-1]
         mimetype = {
             'js': 'application/javascript',
             'css': 'text/css',
             'map': 'application/json',
-        }[ext]
+        }.get(ext, 'text/plain')
 
         response = HttpResponse(self.dash.serve_component_suites(*args, **kwargs), content_type=mimetype)
-        # response['Cache-Control'] = 'public, max-age={}'.format(self.dash.config.components_cache_max_age)
         if self.dash_cache_max_age:
             response['Cache-Control'] = 'public, max-age={}'.format(self.dash_cache_max_age)
         return response
