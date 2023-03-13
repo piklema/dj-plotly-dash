@@ -12,7 +12,7 @@ def read_req_file(req_type):
 
 
 general_requires = [
-    'Django>=2.0,<4',
+    'Django>=2.0',
     'plotly>=4.14.1,<6',
     'future',
 ]
