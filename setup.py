@@ -42,7 +42,7 @@ setup(
             "renderer = dash.development.build_process:renderer",
         ],
     },
-    url='https://github.com/pikhovkin/dj-plotly-dash',
+    url='https://github.com/piklema/dj-plotly-dash',
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Environment :: Web Environment',
