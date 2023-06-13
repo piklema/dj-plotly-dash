@@ -508,14 +508,10 @@ class Dash(object):
                 relative_package_path,
             )
 
-            modified = int(os.stat(module_path).st_mtime)
-
-            url_path = '{}_dash-component-suites/{}/{}?v={}&m={}'.format(
+            url_path = '{}_dash-component-suites/{}/{}'.format(
                 path_prefix,
                 namespace,
                 relative_package_path,
-                importlib.import_module(namespace).__version__,
-                modified
             )
 
             return static(url_path) if serve_from_static else url_path
@@ -557,8 +553,6 @@ class Dash(object):
                 raise Exception("Serving files from absolute_path isn't supported yet")
             elif "asset_path" in resource:
                 static_url = resource["asset_path"]
-                # Add a cache-busting query param
-                static_url += "?m={}".format(resource["ts"])
                 srcs.append(static_url)
         return srcs
 
@@ -680,12 +674,10 @@ class Dash(object):
             favicon_mod_time = os.path.getmtime(
                 os.path.join(self.config.assets_folder, self._favicon)
             )
-            favicon_url = self._favicon + "?m={}".format(
-                favicon_mod_time
-            )
+            favicon_url = self._favicon
         else:
-            favicon_url = "{}_favicon.ico?v={}".format(
-                self.config.requests_pathname_prefix, __version__
+            favicon_url = "{}_favicon.ico".format(
+                self.config.requests_pathname_prefix
             )
 
         favicon = format_tag(
